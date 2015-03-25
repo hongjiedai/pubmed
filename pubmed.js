@@ -3,7 +3,7 @@ var $j = jQuery.noConflict();
 PubMed.NCBI = "http://www.ncbi.nlm.nih.gov";
 PubMed.Abstract = "abstract";
 PubMed.Summary = "docsum";
-PubMed.TITLE_NODE_SELECTOR = "p.title["+__TITLE_ATTRIBUTE__+"]"; 
+PubMed.TITLE_NODE_SELECTOR = "p.title[pmid]"; 
 PubMed.ABSTRACT_NODE_SELECTOR = ".pubmed_abstract"; 
 
 function PubMed(){
@@ -32,7 +32,7 @@ function PubMed(){
 		wrap_selector.wrapAll("<span><span class='pubmed_abstract'></span></span>");
 	};
 	// Add a document icon and a hyperlink for each article
-	this.preprocess = function(){
+	this.preprocess = function(icon_path){
 		// Get all title information
 		var o_titles = $j(__SUMMARY_PREFIX_NODE_PATH__ + __SUMMARY_TITLE_NODE__, __SUMMARY_NODE__),
 			  pmid_node_selectors =$j( __SUMMARY_PREFIX_NODE_PATH__ + __SUMMARY_PMID_NODE__, __SUMMARY_NODE__), 
@@ -54,8 +54,15 @@ function PubMed(){
 			pmid = $j(pmid_node_selectors[i]).text();
 			title = title_node.text();
 			link = PubMed.NCBI +$j("a", title_node).attr("href");
-			title_node.attr(__TITLE_ATTRIBUTE__).attr(__PMID_ATTRIBUTE__, pmid).html(title+"&nbsp;<a title='View' href='"+link+"'><img border='0' src='"+
-			                chrome.extension.getURL("images/doc.png")+"' alt='View'/></a>");
+			title_node.attr(__TITLE_ATTRIBUTE__, true).attr(__PMID_ATTRIBUTE__, pmid)
+			          .html(title+"&nbsp;");
+			if(icon_path){
+				image = $j("<img/>", {border: '0',
+					                    src: icon_path,
+					                    alt: 'View'});
+				title_node.append($j("<a />", {title: "View",
+					                            href: link}).append(image));
+			}
 			$j("div.supp > p.desc", title_node.parent()).wrap("<a href='"+link+"'></a>").css({'text-decoration':'underline'});			
 			// wrap abstract with our tag: pubmedex_abstract
 			this.wrapAbstract(title_node.parent());
