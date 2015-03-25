@@ -3,8 +3,9 @@ var $j = jQuery.noConflict();
 PubMed.NCBI = "http://www.ncbi.nlm.nih.gov";
 PubMed.Abstract = "abstract";
 PubMed.Summary = "docsum";
-PubMed.TITLE_NODE_SELECTOR = "p.title[pmid]"; 
-PubMed.ABSTRACT_NODE_SELECTOR = ".pubmed_abstract"; 
+PubMed.SUMMARY_TITLE_NODE_SELECTOR = "p.title[pmid]"; 
+PubMed.ABSTRACT_TITLE_NODE_SELECTOR = "h1[pmid]"; 
+PubMed.ABSTRACT_ABSTRACT_NODE_SELECTOR = "span[abstract][pmid]"; 
 
 function PubMed(){
 	var __SUMMARY_PMID_NODE__ = "div.aux > div.resc > dl.rprtid > dd:first",
@@ -17,20 +18,25 @@ function PubMed(){
 	    __ABSTRACT_NODE__ = "form#EntrezForm > div > div#maincontent > div.content > div.rprt_all > div.rprt.abstract", 
 	    __ABSTRACT_SECTION_NODE__ = "> h4", 
 	    __ABSTRACT_ABSTRACT_NODE__ = "div.abstr > div", 
-	    __ABSTRACT_PARAGRAPH_NODE__ = "> p", 
+	    __ABSTRACT_PARAGRAPH_NODE__ = "> p > abstracttext", 
 	    __ABSTRACT_PMID_NODE__ = "div.aux > div.resc > dl.rprtid > dd:first",
 	    __ABSTRACT_JOURNAL_NODE__ = "div.cit > span > a"
-	    __TITLE_ATTRIBUTE__ = "pubmed_title",
 	    __PMID_ATTRIBUTE__ = "pmid";
-	this.wrapAbstract = function(node){
+	this.__updateAbstract__ = function(node, pmid){
 		var wrap_selector = $j(__ABSTRACT_ABSTRACT_NODE__ + __ABSTRACT_SECTION_NODE__, node);
 		if(wrap_selector.length > 0){ // have section
 			wrap_selector = wrap_selector.add(wrap_selector.next());
 		}else{
-			wrap_selector = $j(__ABSTRACT_ABSTRACT_NODE__ + __ABSTRACT_PARAGRAPH_NODE__ +":first", node);
+			wrap_selector = $j(__ABSTRACT_ABSTRACT_NODE__ + __ABSTRACT_PARAGRAPH_NODE__, node);
 		}
-		wrap_selector.wrapAll("<span><span class='pubmed_abstract'></span></span>");
+		
+		wrap_selector.wrapAll($j("<span/>", {abstract: true,
+                                         pmid: pmid}));
 	};
+	this.__updateTitle__ = function(title_node, pmid, title){
+		title_node.attr(__PMID_ATTRIBUTE__, pmid)
+			         .html(title+"&nbsp;");
+	}
 	// Add a document icon and a hyperlink for each article
 	this.preprocess = function(icon_path){
 		// Get all title information
@@ -43,19 +49,16 @@ function PubMed(){
 		}
 			
 		// Display Settings: Format=Abstract
-		// More than 1 article.
+		// More than 1 article
 		if(o_titles.length < 1){
 			o_titles = $j(__ABSTRACT_PREFIX_NODE_PATH__ + __ABSTRACT_TITLE_NODE__, __ABSTRACT_NODE__);
-			// TODO 
-			// pmid_node_selectors =$j(__SUMMARY_PMID_NODE__, __SUMMARY_NODE__)
 		}
 		for(i = 0; i < o_titles.length; i++){
 			title_node = $j(o_titles[i]);
 			pmid = $j(pmid_node_selectors[i]).text();
 			title = title_node.text();
 			link = PubMed.NCBI +$j("a", title_node).attr("href");
-			title_node.attr(__TITLE_ATTRIBUTE__, true).attr(__PMID_ATTRIBUTE__, pmid)
-			          .html(title+"&nbsp;");
+			this.__updateTitle__(title_node, pmid, title);
 			if(icon_path){
 				image = $j("<img/>", {border: '0',
 					                    src: icon_path,
@@ -65,18 +68,20 @@ function PubMed(){
 			}
 			$j("div.supp > p.desc", title_node.parent()).wrap("<a href='"+link+"'></a>").css({'text-decoration':'underline'});			
 			// wrap abstract with our tag: pubmedex_abstract
-			this.wrapAbstract(title_node.parent());
+			this.__updateAbstract__(title_node.parent(), pmid);
 		}
+		//////////////////////////////////////////////////////////////////
 		// Display Settings: Format=Abstract
 		// Only 1 article.
 		if(o_titles.length < 1){
 			o_titles = $j(__ABSTRACT_TITLE_NODE__, __ABSTRACT_NODE__);
 			title_node = $j(o_titles[0]);
+			pmid = $j(pmid_node_selectors[i]).text();
 			title = title_node.text();
-			title_node.html("<span><span class='pubmed_title'>"+title+"&nbsp;</span></span>");
+			this.__updateTitle__(title_node, pmid, title);
 			
 			// wrap abstract with our tag: pubmedex_abstract
-			this.wrapAbstract(title_node.parent());		
+			this.__updateAbstract__(title_node.parent(), pmid);		
 		}
 		return o_titles.length;
 	};
