@@ -114,12 +114,11 @@ function PubMed(){
 		return summary_list;
 	}
 	// Retrieve PubMed Display Setting in Abstract Format
-	this.getAbstracts = function(len){
+	this.getAbstracts = function(count){
 		var abstracts = $j(__ABSTRACT_NODE__),
 			  title_node_selector = __ABSTRACT_TITLE_NODE__,
 			  pmid_node_selector = __ABSTRACT_PMID_NODE__,
-			  // wrapAbstract modify the content and add span > span.pubmed_abstract
-			  abstract_node_selector = __ABSTRACT_ABSTRACT_NODE__ + " > span > span.pubmed_abstract",
+			  abstract_node_selector = PubMed.ABSTRACT_ABSTRACT_NODE_SELECTOR,
 			  journal_node_selector = __ABSTRACT_JOURNAL_NODE__,
 			  paragraph_node_selector = __ABSTRACT_PARAGRAPH_NODE__,
 			  section_node_selector = __ABSTRACT_SECTION_NODE__,
@@ -127,7 +126,7 @@ function PubMed(){
 			  i, j,
 			  abstracts_node, pmid, title, journal_node, sections, paragraphs, section_count, abs_pargraphs, article;
 		// More than 1 article
-		if(len > 1){
+		if(count > 1){
 			title_node_selector = __ABSTRACT_PREFIX_NODE_PATH__ + title_node_selector;
 			pmid_node_selector = __ABSTRACT_PREFIX_NODE_PATH__ + pmid_node_selector;
 			abstract_node_selector = __ABSTRACT_PREFIX_NODE_PATH__ + abstract_node_selector;
