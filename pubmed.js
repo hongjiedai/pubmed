@@ -1,6 +1,7 @@
 var $j = jQuery.noConflict();
 
 PubMed.NCBI = "http://www.ncbi.nlm.nih.gov";
+PubMed.PubMed = PubMed.NCBI + "/pubmed";
 PubMed.Abstract = "abstract";
 PubMed.Summary = "docsum";
 PubMed.SUMMARY_TITLE_NODE_SELECTOR = "p.title[pmid]"; 
