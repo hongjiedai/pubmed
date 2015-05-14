@@ -19,7 +19,8 @@ function PubMed(){
 	    __ABSTRACT_NODE__ = "form#EntrezForm > div > div#maincontent > div.content > div.rprt_all > div.rprt.abstract", 
 	    __ABSTRACT_SECTION_NODE__ = "> h4", 
 	    __ABSTRACT_ABSTRACT_NODE__ = "div.abstr > div", 
-	    __ABSTRACT_PARAGRAPH_NODE__ = "> p > abstracttext", 
+	    __ABSTRACT_PARAGRAPH_NODE__ = "> p > abstracttext",
+	    __ABSTRACT_NO_PARAGRAPH_NODE__ = "> abstracttext",
 	    __ABSTRACT_PMID_NODE__ = "div.aux > div.resc > dl.rprtid > dd:first",
 	    __ABSTRACT_JOURNAL_NODE__ = "div.cit > span > a"
 	    __PMID_ATTRIBUTE__ = "pmid";
@@ -115,22 +116,50 @@ function PubMed(){
 		return summary_list;
 	}
 	// Retrieve PubMed Display Setting in Abstract Format
+	// No section heading layout:
+	//  Example: http://www.ncbi.nlm.nih.gov/pubmed/?term=21691718
+	//  Abstract (1 article):	
+	//   div.rprt.abstract > div.abstr > div > p > span > abstracttext	
+	//  Example: 11160820[uid] OR 17241884[uid]
+	//  Abstract (More then 1 article):	
+	//   div.rprt.abstract > div.rslt > div.abstr > div > p > span > abstracttext	
+	// ***************************************************************
+	// With section heading layout:
+	//  Example: http://www.ncbi.nlm.nih.gov/pubmed/17241884
+	//  Abstract (1 article):	
+	//  Paragraphs
+  //   div.rprt.abstract > div.abstr > div > span > p > abstracttext
+	//   div.rprt.abstract > div.abstr > div > span > p > abstracttext
+	//   div.rprt.abstract > div.abstr > div > span > p > abstracttext
+	//   ...
+	//  Example: 11160820[uid] OR 17241884[uid]
+	//  Abstract (More then 1 article):	
+	//  Paragraphs
+	//   div.rprt.abstract > div.rslt > div.abstr > div > span > p > abstracttext	
+	//   div.rprt.abstract > div.rslt > div.abstr > div > span > p > abstracttext	
+	//   ...
 	this.getAbstracts = function(count){
-		var abstracts = $j(__ABSTRACT_NODE__),
-			  title_node_selector = __ABSTRACT_TITLE_NODE__,
-			  pmid_node_selector = __ABSTRACT_PMID_NODE__,
-			  abstract_node_selector = PubMed.ABSTRACT_ABSTRACT_NODE_SELECTOR,
+		var abstracts = $j(__ABSTRACT_NODE__), // form#EntrezForm > div > div#maincontent > div.content > div.rprt_all > div.rprt.abstract
+		                                       // The node contain current abstract
+			  title_node_selector = __ABSTRACT_TITLE_NODE__,	// h1
+			  pmid_node_selector = __ABSTRACT_PMID_NODE__, // div.aux > div.resc > dl.rprtid > dd:first
+			  abstract_node_selector = PubMed.ABSTRACT_ABSTRACT_NODE_SELECTOR, // span[abstract][pmid]
 			  journal_node_selector = __ABSTRACT_JOURNAL_NODE__,
-			  paragraph_node_selector = __ABSTRACT_PARAGRAPH_NODE__,
-			  section_node_selector = __ABSTRACT_SECTION_NODE__,
+			  paragraph_node_selector = __ABSTRACT_PARAGRAPH_NODE__, // > p > abstracttext
+			  section_node_selector = abstract_node_selector + __ABSTRACT_SECTION_NODE__,	// span[abstract][pmid] > h4
 			  abstract_list = new Array(),
 			  i, j,
 			  abstracts_node, pmid, title, journal_node, sections, paragraphs, section_count, abs_pargraphs, article;
 		// More than 1 article
 		if(count > 1){
+			// div.rslt > h1
 			title_node_selector = __ABSTRACT_PREFIX_NODE_PATH__ + title_node_selector;
+			// div.rslt > div.aux > div.resc > dl.rprtid > dd:first
 			pmid_node_selector = __ABSTRACT_PREFIX_NODE_PATH__ + pmid_node_selector;
-			abstract_node_selector = __ABSTRACT_PREFIX_NODE_PATH__ + abstract_node_selector;
+			// div.rslt > div.abstr > div > span[abstract][pmid]
+			//abstract_node_selector = __ABSTRACT_PREFIX_NODE_PATH__ + __ABSTRACT_ABSTRACT_NODE__ + " > " + abstract_node_selector;
+			// div.abstr > div > p > span[abstract][pmid]
+			abstract_node_selector = __ABSTRACT_ABSTRACT_NODE__ + " > p > " + abstract_node_selector;
 			journal_node_selector = __ABSTRACT_PREFIX_NODE_PATH__ + journal_node_selector;
 		}
 		for(i = 0; i < abstracts.length; i++){
@@ -138,7 +167,14 @@ function PubMed(){
 			pmid=$j(pmid_node_selector, abstracts_node).text();
 			title = $j(title_node_selector, abstracts_node).text();		
 			journal_node = $j(journal_node_selector, abstracts_node);
-			sections = $j(abstract_node_selector+section_node_selector, abstracts_node);				
+			sections = $j(section_node_selector, abstracts_node);
+			// no section
+			if(sections.length==0){
+				paragraph_node_selector = __ABSTRACT_NO_PARAGRAPH_NODE__; // > abstracttext
+			}else{
+				// div.abstr > div > span >
+				abstract_node_selector = __ABSTRACT_ABSTRACT_NODE__ + " > " + PubMed.ABSTRACT_ABSTRACT_NODE_SELECTOR;
+			}				
 			paragraphs = $j(abstract_node_selector+paragraph_node_selector, abstracts_node);		
 			section_count = sections.length==0 ? 1 : sections.length;
 			abs_pargraphs = new Array();
@@ -153,6 +189,8 @@ function PubMed(){
 			                      $j(title_node_selector, abstracts_node), 
 			                      $j(abstract_node_selector, abstracts_node));
 			abstract_list.push(article);
+			// roll back to original abstract_node_selector
+			abstract_node_selector = __ABSTRACT_ABSTRACT_NODE__ + " > p > " + PubMed.ABSTRACT_ABSTRACT_NODE_SELECTOR;
 		}
 		return abstract_list;
 	};
