@@ -168,6 +168,7 @@ function PubMed(){
 			title = $j(title_node_selector, abstracts_node).text();		
 			journal_node = $j(journal_node_selector, abstracts_node);
 			sections = $j(section_node_selector, abstracts_node);
+			paragraph_node_selector = __ABSTRACT_PARAGRAPH_NODE__;
 			// no section
 			if(sections.length==0){
 				paragraph_node_selector = __ABSTRACT_NO_PARAGRAPH_NODE__; // > abstracttext
