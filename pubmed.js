@@ -70,6 +70,7 @@ function PubMed(){
 			}
 			$j("div.supp > p.desc", title_node.parent()).wrap("<a href='"+link+"'></a>").css({'text-decoration':'underline'});			
 			// wrap abstract with our tag: pubmedex_abstract
+			title_node.parent().attr("pmid", pmid);
 			this.__updateAbstract__(title_node.parent(), pmid);
 		}
 		//////////////////////////////////////////////////////////////////
