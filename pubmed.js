@@ -7,6 +7,7 @@ PubMed.Summary = "docsum";
 PubMed.SUMMARY_TITLE_NODE_SELECTOR = "p.title[pmid]"; 
 PubMed.ABSTRACT_TITLE_NODE_SELECTOR = "h1[pmid]"; 
 PubMed.ABSTRACT_ABSTRACT_NODE_SELECTOR = "span[abstract][pmid]"; 
+PubMed.ABSTRACT_TITLE_PAGER_NODE_SELECTOR = "div.title_and_pager"; 
 
 function PubMed(){
 	var __SUMMARY_PMID_NODE__ = "div.aux > div.resc > dl.rprtid > dd:first",
@@ -27,6 +28,11 @@ function PubMed(){
 	this.__updateAbstract__ = function(node, pmid){
 		var wrap_selector = $j(__ABSTRACT_ABSTRACT_NODE__ + __ABSTRACT_SECTION_NODE__, node);
 		if(wrap_selector.length > 0){ // have section
+			// Check special case for the first section that didn't have section title
+			// e.g. http://www.ncbi.nlm.nih.gov/pubmed/25608619
+			if(wrap_selector.first().prev().length == 1){
+				wrap_selector = wrap_selector.add(wrap_selector.first().prev().last());
+			}			
 			wrap_selector = wrap_selector.add(wrap_selector.next());
 		}else{
 			wrap_selector = $j(__ABSTRACT_ABSTRACT_NODE__ + __ABSTRACT_PARAGRAPH_NODE__, node);
@@ -181,6 +187,15 @@ function PubMed(){
 			section_count = sections.length==0 ? 1 : sections.length;
 			abs_pargraphs = new Array();
 			section_names = new Array();
+			// Check special case for the first section that didn't have section title
+			// e.g. http://www.ncbi.nlm.nih.gov/pubmed/25608619			
+			if(sections.length > 0 && paragraphs.length > sections.length){
+				for(j = 1; j+sections.length <= paragraphs.length; j++){
+					section_names.push("");
+					abs_pargraphs.push($j(paragraphs[j-1]).text());
+					paragraphs = paragraphs.splice(j, paragraphs.length);
+				}				
+			}
 			for(j=0; j<section_count; j++){
 				if(sections.length > 0){
 					section_names.push($j(sections[j]).text());
